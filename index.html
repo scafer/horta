@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horta — A Minha Horta</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <span class="logo-icon">🌿</span>
+      <h1>Horta</h1>
+      <p class="tagline">A minha horta digital</p>
+    </header>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('horta',this)"><span class="ti">🌱</span>Horta</button>
+      <button class="tab-btn" onclick="switchTab('calendar',this)"><span class="ti">📅</span>Calendário</button>
+      <button class="tab-btn" onclick="switchTab('harvest',this)"><span class="ti">🌾</span>Colheitas</button>
+    </div>
+
+    <!-- TAB HORTA -->
+    <div id="tab-horta" class="tab-content active">
+      <div class="weather-strip">
+        <div class="weather-icon" id="wIcon">🌤️</div>
+        <div class="weather-info">
+          <div class="weather-temp" id="wTemp">—°C</div>
+          <div class="weather-desc" id="wDesc">A obter meteorologia…</div>
+          <div class="weather-location" id="wLoc">📍 Localização desconhecida</div>
+        </div>
+        <div class="weather-details" id="wDetails" style="display:none">
+          <div class="weather-pill" id="wHum">💧 —%</div>
+          <div class="weather-pill" id="wWind">💨 —</div>
+          <div class="weather-pill" id="wRain">🌧️ —</div>
+        </div>
+        <button id="locate-btn" onclick="getLocation()">📍 Localizar</button>
+      </div>
+
+      <div class="rain-forecast" id="rainForecast" style="display:none">
+        <h4>☁️ Previsão 7 dias — rega inteligente</h4>
+        <div class="rain-days" id="rainDays"></div>
+        <div id="rainAdvice"></div>
+      </div>
+
+      <div class="ai-tip">
+        <div class="ti2">💡</div>
+        <div>
+          <div class="tip-label">Dica do Dia</div>
+          <div class="tip-text" id="tipText">Localize a sua horta para receber dicas personalizadas para a estação e o
+            clima atual.</div>
+        </div>
+      </div>
+
+      <div class="season-card">
+        <h3 id="seasonTitle">🌱 Primavera — Abril</h3>
+        <p id="seasonText">Altura ideal para semear tomates, pepinos, courgettes e feijão verde.</p>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stat-pill green">🌿 <span id="statPlants">0</span> plantas</div>
+        <div class="stat-pill blue">💧 <span id="statWater">0</span> a regar</div>
+        <div class="stat-pill orange">🌾 <span id="statReady">0</span> prontas</div>
+      </div>
+
+      <div class="section-title">🌱 As Minhas Plantas</div>
+      <div class="plants-grid" id="plantsGrid">
+        <div class="add-plant-btn" onclick="openAddModal()"><span>＋</span><span class="lbl">Adicionar</span></div>
+      </div>
+
+      <div class="section-title">💧 Registo de Rega</div>
+      <div style="background:white;border-radius:13px;padding:13px;box-shadow:0 2px 8px var(--shadow)">
+        <p style="font-size:0.78rem;color:#7a6a5a;margin-bottom:4px;">Últimos 7 dias — clique para marcar</p>
+        <div class="water-row" id="waterRow"></div>
+      </div>
+
+      <div class="section-title">✅ Tarefas</div>
+      <div class="tasks-list" id="tasksList"></div>
+      <div class="add-task-row">
+        <input type="text" id="newTaskInput" placeholder="Nova tarefa…" onkeydown="if(event.key==='Enter')addTask()">
+        <button onclick="addTask()">＋</button>
+      </div>
+
+      <div class="section-title">📓 Notas</div>
+      <textarea class="notes-area" id="notesArea" placeholder="Anote observações, datas, problemas…"
+        oninput="saveNotes()"></textarea>
+    </div>
+
+    <!-- TAB CALENDÁRIO -->
+    <div id="tab-calendar" class="tab-content">
+      <div class="section-title" style="margin-top:18px">📅 Calendário de Sementeiras</div>
+      <p style="font-size:0.81rem;color:#6a5a4a;margin-bottom:12px;">O que semear, transplantar e colher em cada mês em
+        Portugal continental.</p>
+      <div class="cal-legend">
+        <div class="leg-item">
+          <div class="leg-dot" style="background:#fef8dc;border:1px solid #e8c84a55"></div>Semear
+        </div>
+        <div class="leg-item">
+          <div class="leg-dot" style="background:#f0f9e4;border:1px solid #a8c68f55"></div>Transplantar
+        </div>
+        <div class="leg-item">
+          <div class="leg-dot" style="background:#fdeee4;border:1px solid #c4814a55"></div>Colher
+        </div>
+      </div>
+      <div class="cal-month-grid" id="calGrid"></div>
+    </div>
+
+    <!-- TAB COLHEITAS -->
+    <div id="tab-harvest" class="tab-content">
+      <div class="section-title" style="margin-top:18px">🌾 Diário de Colheitas</div>
+      <div class="harvest-stats-row">
+        <div class="h-stat">
+          <div class="hs-val" id="hsTotalKg">0</div>
+          <div class="hs-lbl">kg colhidos</div>
+        </div>
+        <div class="h-stat">
+          <div class="hs-val" id="hsTotalItems">0</div>
+          <div class="hs-lbl">registos</div>
+        </div>
+        <div class="h-stat">
+          <div class="hs-val" id="hsBestPlant">—</div>
+          <div class="hs-lbl">+ colhida</div>
+        </div>
+      </div>
+      <div class="harvest-form">
+        <h4>📝 Registar Colheita</h4>
+        <div class="form-row">
+          <select id="hPlant">
+            <option value="">— Planta —</option>
+          </select>
+          <input type="number" id="hQty" placeholder="Quantidade" min="0.1" step="0.1">
+          <select id="hUnit">
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="un">unidades</option>
+            <option value="molhos">molhos</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <input type="date" id="hDate">
+          <input type="text" id="hNote" placeholder="Nota (opcional)">
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:3px" onclick="addHarvest()">Registar Colheita</button>
+      </div>
+      <div class="harvest-list" id="harvestList"></div>
+    </div>
+
+    <div class="modal-overlay" id="addModal">
+      <div class="modal">
+        <h2>🌱 Adicionar Planta</h2>
+        <div class="modal-grid" id="plantOptions"></div>
+        <input class="modal-input" id="plantNameInput" placeholder="Nome personalizado (opcional)">
+        <input class="modal-input" id="plantDateInput" type="date">
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal('addModal')">Cancelar</button>
+          <button class="btn-primary" onclick="addPlant()">Adicionar</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-overlay" id="detailModal">
+      <div class="modal" id="detailContent"></div>
+    </div>
+
+    <script src="script.js" defer></script>
+</body>
+
+</html>
