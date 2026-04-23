@@ -1,0 +1,24 @@
+{
+  "name": "Horta - A Minha Horta",
+  "short_name": "Horta",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#5a7a3a",
+  "lang": "pt-PT",
+  "description": "Gestao simples da sua horta: plantas, rega, calendario e colheitas.",
+  "icons": [
+    {
+      "src": "icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
