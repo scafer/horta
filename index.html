@@ -4,7 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#5a7a3a">
   <title>Horta — A Minha Horta</title>
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -20,6 +22,7 @@
       <button class="tab-btn active" onclick="switchTab('horta',this)"><span class="ti">🌱</span>Horta</button>
       <button class="tab-btn" onclick="switchTab('calendar',this)"><span class="ti">📅</span>Calendário</button>
       <button class="tab-btn" onclick="switchTab('harvest',this)"><span class="ti">🌾</span>Colheitas</button>
+      <button class="tab-btn" onclick="switchTab('references',this)"><span class="ti">📚</span>Referências</button>
     </div>
 
     <!-- TAB HORTA -->
@@ -36,7 +39,11 @@
           <div class="weather-pill" id="wWind">💨 —</div>
           <div class="weather-pill" id="wRain">🌧️ —</div>
         </div>
-        <button id="locate-btn" onclick="getLocation()">📍 Localizar</button>
+        <button id="locate-btn" onclick="getLocation()">📍 GPS</button>
+      </div>
+      <div class="location-search">
+        <input type="text" id="locationInput" placeholder="Ex: Lisboa, Coimbra, Porto…" onkeydown="if(event.key==='Enter')searchLocation()">
+        <button id="search-loc-btn" onclick="searchLocation()">🔍</button>
       </div>
 
       <div class="rain-forecast" id="rainForecast" style="display:none">
@@ -66,8 +73,23 @@
       </div>
 
       <div class="section-title">🌱 As Minhas Plantas</div>
+      <div class="bed-filter-row">
+        <label for="bedFilterSelect">Filtrar por canteiro</label>
+        <select id="bedFilterSelect" onchange="setBedFilter(this.value)">
+          <option value="all">Todos os canteiros</option>
+        </select>
+      </div>
       <div class="plants-grid" id="plantsGrid">
         <div class="add-plant-btn" onclick="openAddModal()"><span>＋</span><span class="lbl">Adicionar</span></div>
+      </div>
+
+      <div class="section-title">🪴 Canteiros / Zonas</div>
+      <div class="beds-panel">
+        <div class="add-bed-row">
+          <input type="text" id="newBedInput" placeholder="Ex: Canteiro A" onkeydown="if(event.key==='Enter')addBed()">
+          <button onclick="addBed()">＋</button>
+        </div>
+        <div id="bedSummaryList"></div>
       </div>
 
       <div class="section-title">💧 Registo de Rega</div>
@@ -83,9 +105,34 @@
         <button onclick="addTask()">＋</button>
       </div>
 
+      <div class="section-title">🔔 Lembretes</div>
+      <div class="reminder-card">
+        <div class="reminder-status" id="reminderStatus">Notificações não configuradas.</div>
+        <div class="reminder-toggle">
+          <input type="checkbox" id="reminderEnabled" onchange="toggleReminders(this.checked)">
+          <label for="reminderEnabled">Ativar lembrete diário</label>
+        </div>
+        <div class="reminder-row">
+          <label for="reminderTime">Hora</label>
+          <input type="time" id="reminderTime" onchange="updateReminderTime(this.value)">
+          <button class="tool-btn" onclick="requestNotificationPermission()">Permissão</button>
+          <button class="tool-btn" onclick="testReminder()">Testar</button>
+        </div>
+        <p class="reminder-help">Os lembretes funcionam com o navegador aberto e permissão ativa.</p>
+      </div>
+
       <div class="section-title">📓 Notas</div>
       <textarea class="notes-area" id="notesArea" placeholder="Anote observações, datas, problemas…"
         oninput="saveNotes()"></textarea>
+
+
+      <div class="section-title">�🗂️ Dados</div>
+      <div class="data-tools">
+        <button class="tool-btn" onclick="exportData('json')">⬇️ Exportar JSON</button>
+        <button class="tool-btn" onclick="exportData('csv')">⬇️ Exportar CSV</button>
+        <button class="tool-btn" onclick="triggerImport()">⬆️ Importar Backup</button>
+        <input type="file" id="importFile" accept="application/json,text/csv,.csv" style="display:none" onchange="importData(event)">
+      </div>
     </div>
 
     <!-- TAB CALENDÁRIO -->
@@ -93,18 +140,31 @@
       <div class="section-title" style="margin-top:18px">📅 Calendário de Sementeiras</div>
       <p style="font-size:0.81rem;color:#6a5a4a;margin-bottom:12px;">O que semear, transplantar e colher em cada mês em
         Portugal continental.</p>
+      <div class="zone-selector">
+        <span class="zone-label">📍 Zona:</span>
+        <button class="zone-btn active" data-zone="todos" onclick="setZone('todos', this)">🇵🇹 Geral</button>
+        <button class="zone-btn" data-zone="nc" onclick="setZone('nc', this)">🌧️ Norte / Centro</button>
+        <button class="zone-btn" data-zone="s" onclick="setZone('s', this)">☀️ Sul</button>
+      </div>
       <div class="cal-legend">
-        <div class="leg-item">
-          <div class="leg-dot" style="background:#fef8dc;border:1px solid #e8c84a55"></div>Semear
-        </div>
-        <div class="leg-item">
-          <div class="leg-dot" style="background:#f0f9e4;border:1px solid #a8c68f55"></div>Transplantar
-        </div>
-        <div class="leg-item">
-          <div class="leg-dot" style="background:#fdeee4;border:1px solid #c4814a55"></div>Colher
-        </div>
+        <div class="leg-item"><div class="leg-dot" style="background:#fef8dc;border:1px solid #e8c84a55"></div>Semear</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#f0f9e4;border:1px solid #a8c68f55"></div>Transplantar</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#fdeee4;border:1px solid #c4814a55"></div>Colher</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#e8f4fb;border:1px solid #5b9cba55"></div>🌧️ N/C</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#fff8e8;border:1px solid #e8a83055"></div>☀️ Sul</div>
       </div>
       <div class="cal-month-grid" id="calGrid"></div>
+    </div>
+
+    <!-- TAB REFERÊNCIAS -->
+    <div id="tab-references" class="tab-content">
+      <div class="section-title" style="margin-top:18px">📚 Referências</div>
+      <div class="references-section">
+        <p class="references-intro">Fontes de informação utilizadas nesta aplicação:</p>
+        <ul class="references-list">
+          <li><strong><a href="https://open-meteo.com" target="_blank" rel="noopener noreferrer">Open-Meteo</a></strong> — Dados meteorológicos e previsão de tempo</li>
+        </ul>
+      </div>
     </div>
 
     <!-- TAB COLHEITAS -->
@@ -150,9 +210,11 @@
     <div class="modal-overlay" id="addModal">
       <div class="modal">
         <h2>🌱 Adicionar Planta</h2>
+        <button class="btn-tertiary" style="width:100%;margin-bottom:10px" onclick="openCustomPlantModal()">＋ Criar tipo de planta</button>
         <div class="modal-grid" id="plantOptions"></div>
         <input class="modal-input" id="plantNameInput" placeholder="Nome personalizado (opcional)">
         <input class="modal-input" id="plantDateInput" type="date">
+        <select class="modal-input" id="plantBedInput"></select>
         <div class="modal-actions">
           <button class="btn-secondary" onclick="closeModal('addModal')">Cancelar</button>
           <button class="btn-primary" onclick="addPlant()">Adicionar</button>
@@ -161,6 +223,20 @@
     </div>
     <div class="modal-overlay" id="detailModal">
       <div class="modal" id="detailContent"></div>
+    </div>
+    <div class="modal-overlay" id="customPlantModal">
+      <div class="modal">
+        <h2>🧪 Nova Planta Personalizada</h2>
+        <input class="modal-input" id="customEmojiInput" placeholder="Emoji (ex: 🥗)">
+        <input class="modal-input" id="customNameInput" placeholder="Nome da planta">
+        <input class="modal-input" id="customDaysInput" type="number" min="1" placeholder="Dias ate colheita (ex: 75)">
+        <input class="modal-input" id="customWaterInput" type="number" min="1" placeholder="Frequencia de rega em dias (ex: 2)">
+        <textarea class="modal-input" id="customTipInput" placeholder="Dica de cuidado" style="min-height:80px;resize:vertical"></textarea>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal('customPlantModal')">Cancelar</button>
+          <button class="btn-primary" onclick="createCustomPlant()">Guardar</button>
+        </div>
+      </div>
     </div>
 
     <script src="script.js" defer></script>
